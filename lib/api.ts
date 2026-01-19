@@ -2,14 +2,26 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://10.0.0.15:8000";
 
 // Simple logger for terminal visibility
-const logToTerminal = (message: string, data?: any) => {
-  // In Next.js, client-side logs appear in browser console
-  // For terminal visibility, we'd need server-side logging
-  // For now, comprehensive console.logs will be visible in browser dev tools
+// Sends logs to server API route which logs to terminal
+const logToTerminal = async (message: string, data?: any) => {
+  // Log to browser console
   if (data) {
-    console.log(`[TERMINAL DEBUG] ${message}`, JSON.stringify(data, null, 2));
+    console.log(`[API DEBUG] ${message}`, data);
   } else {
-    console.log(`[TERMINAL DEBUG] ${message}`);
+    console.log(`[API DEBUG] ${message}`);
+  }
+  
+  // Also send to server for terminal visibility
+  if (typeof window !== 'undefined') {
+    try {
+      await fetch('/api/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category: 'API', message, data }),
+      }).catch(() => {}); // Silently fail if endpoint doesn't exist
+    } catch {
+      // Ignore errors
+    }
   }
 };
 
@@ -304,17 +316,24 @@ export const youtubeAPI = {
       throw new Error("No access token available");
     }
 
-    // Default redirect URI to localhost:3000
-    const frontendRedirectUri = redirectUri || "http://localhost:3000";
+    // Default redirect URI to current origin (or 10.0.0.15:3000 as fallback)
+    const defaultRedirectUri = typeof window !== "undefined" 
+      ? `${window.location.origin}/youtube/connect/success`
+      : "http://10.0.0.15:3000/youtube/connect/success";
+    const frontendRedirectUri = redirectUri || defaultRedirectUri;
+    
+    // Ensure we're using 10.0.0.15 instead of localhost in the redirect URI
+    const finalRedirectUri = frontendRedirectUri.replace(/localhost|127\.0\.0\.1/, "10.0.0.15");
     
     // DEBUG: Log redirect URI values (visible in browser console and terminal via Next.js)
     logToTerminal("YouTube OAuth - redirectUri parameter", redirectUri);
-    logToTerminal("YouTube OAuth - frontendRedirectUri (final)", frontendRedirectUri);
+    logToTerminal("YouTube OAuth - frontendRedirectUri (before replace)", frontendRedirectUri);
+    logToTerminal("YouTube OAuth - finalRedirectUri (after replace)", finalRedirectUri);
     logToTerminal("YouTube OAuth - window.location.origin", typeof window !== "undefined" ? window.location.origin : "N/A");
     logToTerminal("YouTube OAuth - window.location.href", typeof window !== "undefined" ? window.location.href : "N/A");
     
-    // Build the backend URL with redirect_uri parameter
-    const backendUrl = `${API_BASE_URL}/youtube/connect?redirect_uri=${encodeURIComponent(frontendRedirectUri)}`;
+    // Build the backend URL with redirect_uri parameter (using finalRedirectUri with 10.0.0.15)
+    const backendUrl = `${API_BASE_URL}/youtube/connect?redirect_uri=${encodeURIComponent(finalRedirectUri)}`;
     logToTerminal("YouTube OAuth - backendUrl", backendUrl);
     
     // Try to get JSON response first (in case backend returns JSON with auth_url)

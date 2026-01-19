@@ -1,11 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { MOCK_LANGUAGES } from "../data/mockData";
-import type { Language } from "../data/mockData";
+
+type Language = {
+  code: string;
+  name: string;
+  enabled: boolean;
+};
+
+const DEFAULT_LANGUAGES: Language[] = [
+  { code: "en", name: "English", enabled: true },
+  { code: "es", name: "Spanish", enabled: false },
+  { code: "fr", name: "French", enabled: false },
+  { code: "de", name: "German", enabled: false },
+  { code: "pt", name: "Portuguese", enabled: false },
+  { code: "hi", name: "Hindi", enabled: false },
+  { code: "ja", name: "Japanese", enabled: false },
+  { code: "zh", name: "Chinese", enabled: false },
+];
 
 export default function LanguagesPage() {
-  const [languages, setLanguages] = useState<Language[]>(MOCK_LANGUAGES);
+  const [languages, setLanguages] = useState<Language[]>(DEFAULT_LANGUAGES);
 
   const toggleLanguage = (code: string) => {
     setLanguages((prev) =>

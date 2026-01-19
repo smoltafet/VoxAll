@@ -38,11 +38,12 @@ export default function YouTubeConnectSuccessPage() {
       setChannelName(decodeURIComponent(channelNameParam));
     }
 
-    // Auto-redirect to main app after 3 seconds
-    // The app will check dashboard and show onboarding if needed
+    // Mark onboarding as complete when YouTube is connected
+    // Auto-redirect to main app after 2 seconds
+    localStorage.setItem("onboardingComplete", "true");
     const timer = setTimeout(() => {
       router.push("/");
-    }, 3000);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, [searchParams, router]);
